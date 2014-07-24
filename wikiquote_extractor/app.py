@@ -13,21 +13,26 @@ def process_season_quotes(season_no, url):
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(html_doc)
     
+    output = ''
+    
     content = soup.find('div', id="mw-content-text")
     for node in content.find_all('h3'):
         episode = node.find('span', class_="mw-headline")
         episode_name = episode.string
         
         for next_node in node.next_siblings:
-            print '%'
             if(next_node.name == 'dl'):
                 for quote in next_node.find_all('dd'):
                     quote_line = ''.join([x if x.startswith(':') else ' ' + x for x in list(quote.stripped_strings)])
-                    print quote_line.encode('utf8')
-                source = '        -- "%s", season %s' % (episode_name, season_no)
-                print source.encode('utf8')
+                    output += quote_line.encode('utf8')
+                    output += "\n"
+                source = '        -- "%s", season %s\n' % (episode_name, season_no)
+                output += source.encode('utf8')
+                output += '%\n'
             elif(next_node.name == 'h3'):
                 break
+    
+    return output
 
 def main(args=sys.argv):
     season_list_url = "http://en.wikiquote.org/wiki/The_Simpsons"
@@ -48,7 +53,10 @@ def main(args=sys.argv):
             if(season_no > 12):
                 continue
             season_page_url = urlparse.urljoin(season_list_url, href)
-            process_season_quotes(season_no, season_page_url)
+            output = process_season_quotes(season_no, season_page_url)
+            with open('simpsons/season%s.u8' % season_no, 'w') as f:
+                f.write(output)
+            
 
 if(__name__ == '__main__'):
     main()
